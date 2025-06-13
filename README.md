@@ -72,7 +72,7 @@ POST http://localhost:8080/execute
 Content-Type: application/json
 ```
 
-### ➤ Request Body
+### Request Body
 
 ```json
 {
@@ -82,7 +82,7 @@ Content-Type: application/json
 
 ---
 
-### 📘 Example (PowerShell)
+### Example (PowerShell)
 
 ```powershell
 curl -Method POST http://localhost:8080/execute `
@@ -103,10 +103,67 @@ curl -Method POST http://localhost:8080/execute `
 }
 ```
 
----
+## Cloud Run Deployment
 
-## ⏱️ Time Taken
+You can deploy this API to Google Cloud Run without using `nsjail` by setting an environment variable.
 
-~1 Hour
+### Build and Push Docker Image
 
----
+```bash
+gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/safe-python-api
+```
+
+### Deploy to Cloud Run (no nsjail)
+
+```bash
+gcloud run deploy safe-python-api ^
+  --image gcr.io/YOUR_PROJECT_ID/safe-python-api ^
+  --platform managed ^
+  --region us-central1 ^
+  --allow-unauthenticated ^
+  --set-env-vars USE_NSJAIL=false
+```
+
+Replace `YOUR_PROJECT_ID` with your actual GCP project ID.
+
+## API Usage
+
+### Endpoint
+
+```
+POST /execute
+```
+
+### Headers
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+```json
+{
+  "script": "import json\n\ndef main():\n    return {\"message\": \"It works!\"}\n\nprint(\"Inside nsjail\")\nprint(json.dumps(main()))"
+}
+```
+
+### Example (PowerShell)
+
+```powershell
+curl -Method POST https://safe-python-api-xxxxxx.run.app/execute `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body '{ "script": "import json\n\ndef main():\n    return {\"message\": \"It works!\"}\n\nprint(\"Inside nsjail\")\nprint(json.dumps(main()))" }'
+```
+
+### Successful Response
+
+```json
+{
+  "result": {
+    "message": "It works!"
+  },
+  "stdout": "Inside nsjail\n{\"message\": \"It works!\"}\n"
+}
+```
+
